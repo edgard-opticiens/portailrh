@@ -103,8 +103,19 @@
   .card p{font-size:.9rem;color:var(--muted);margin:0;line-height:1.5;flex:1}
   .go{display:inline-flex;align-items:center;gap:6px;font-family:"Inter";font-size:.85rem;
     font-weight:600;color:var(--accent);transition:color .5s ease}
-  .go svg{width:15px;height:15px;transition:transform .2s ease}
-  .card:hover .go svg{transform:translateX(4px)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+  .btn{display:inline-flex;align-items:center;gap:6px;font-family:"Inter";font-size:.85rem;
+    font-weight:600;padding:9px 14px;border-radius:11px;text-decoration:none;cursor:pointer;
+    border:1.5px solid transparent;
+    transition:background-color .2s ease,border-color .2s ease,color .5s ease,filter .2s ease}
+  .btn svg{width:15px;height:15px;flex:none}
+  .btn-primary{background:var(--panel-bg);color:#fff;transition:background-color .5s ease,filter .2s ease}
+  .btn-primary svg{transition:transform .2s ease}
+  .btn-primary:hover{filter:brightness(1.14)}
+  .btn-primary:hover svg{transform:translateX(3px)}
+  .btn-ghost{background:transparent;color:var(--accent);border-color:var(--accent)}
+  .btn-ghost:hover{background:var(--accent-soft)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);
     font-size:.8rem;color:var(--muted);line-height:1.5;transition:border-color .5s ease}
@@ -183,6 +194,10 @@ const OUTILS = [
     liens:{
       edgard:"https://edgard-opticiens.github.io/conges-payes/",
       gdo:"https://edgard-opticiens.github.io/conges-payes-gdo/",
+    },
+    procedures:{
+      edgard:"procedures/procedure-conges-edgard.pdf",
+      gdo:"procedures/procedure-conges-gdo.pdf",
     }
   },
   {
@@ -195,7 +210,8 @@ const OUTILS = [
     titre:"Je fais ma note de frais",
     desc:"Saisie des frais avec calcul des indemnités kilométriques et envoi signé.",
     icone:"receipt",
-    lien:"https://edgard-opticiens.github.io/ndf/"
+    lien:"https://edgard-opticiens.github.io/ndf/",
+    procedure:"procedures/procedure-note-de-frais.pdf"   // même procédure Edgard et GdO
   },
   {
     titre:"Saisir ma variable de paie",
@@ -213,10 +229,16 @@ const ICONS = {
   receipt:'<path d="M6 2h12v20l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3L6 22z"/><path d="M9.5 8h5M9.5 12h5"/>',
 };
 const ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const DOC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h5M10 17h5"/></svg>';
 
 let actif = "edgard";
 
 function lienDe(o){ return o.lien !== undefined ? o.lien : (o.liens && o.liens[actif]) || "#"; }
+function procedureDe(o){
+  if(o.procedure) return o.procedure;
+  if(o.procedures) return o.procedures[actif] || null;
+  return null;
+}
 
 function majPanneau(){
   const m = MARQUES[actif];
@@ -234,16 +256,21 @@ function rendreCartes(){
   const grid=document.getElementById("grid"); grid.innerHTML="";
   OUTILS.forEach(o=>{
     const url=lienDe(o), todo=!url||url==="#";
-    const a=document.createElement("a");
-    a.className="card"; a.href=url; a.rel="noopener";
-    if(!todo) a.target="_blank";
-    a.innerHTML=`
+    const proc=procedureDe(o);
+    const card=document.createElement("div");
+    card.className="card";
+    let actions =
+      `<a class="btn btn-primary" href="${url}" ${todo?'':'target="_blank"'} rel="noopener">`+
+      `${todo?"Lien à configurer":"Ouvrir l'outil"} ${ARROW}</a>`;
+    if(proc) actions +=
+      `<a class="btn btn-ghost" href="${proc}" target="_blank" rel="noopener">${DOC} Voir la procédure</a>`;
+    card.innerHTML=`
       <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[o.icone]||""}</svg></span>
       <h2>${o.titre}</h2>
       <p>${o.desc}</p>
-      <span class="go">${todo?"Lien à configurer":"Ouvrir l'outil"} ${ARROW}</span>`;
-    if(todo) a.addEventListener("click",e=>e.preventDefault());
-    grid.appendChild(a);
+      <div class="actions">${actions}</div>`;
+    if(todo) card.querySelector(".btn-primary").addEventListener("click",e=>e.preventDefault());
+    grid.appendChild(card);
   });
 }
 
